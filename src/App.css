@@ -80,11 +80,12 @@
 
 /* Button Fixes for Dark Mode */
 [data-bs-theme='dark'] .btn-outline-secondary {
-    color: #ffffff !important;
+    color: #000000 !important;
     border-color: #ffffff !important;
 }
 
 [data-bs-theme='dark'] .btn-outline-secondary:hover {
-    background-color: #ffffff !important;
-    color: #121212 !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: #dee2e6 1px solid !important;
 }
