@@ -7,7 +7,7 @@ import Footer from "./pages/footer.jsx";
 import Home from "./pages/home.jsx";
 import Appointment from "./pages/appointment.jsx";
 import TokenGeneration from "./pages/tokengeneration.jsx";
-import AmbulanceRecords from "./pages/ambulancerecords.jsx";
+import AmbulanceRecords from "./pages/AmbulanceRecords.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx"; 
 import RouteTracker from "./pages/RouteTracker.jsx";
 
