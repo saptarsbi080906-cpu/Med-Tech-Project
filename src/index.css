@@ -1,0 +1,35 @@
+/* --- Force Light Mode Variables --- */
+:root, [data-theme='light'] {
+    --bg-primary: #ffffff !important;
+    --bg-secondary: #f8f9fa !important;
+    --text-main: #212529 !important;
+    --text-muted: #6c757d !important;
+    --navbar-bg: #ffffff !important;
+    --card-bg: #ffffff !important;
+    --ticker-bg: #000000 !important;
+    --ticker-text: #ffffff !important;
+    --hero-gradient: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%) !important;
+}
+
+/* --- Force Dark Mode Variables --- */
+[data-theme='dark'] {
+    --bg-primary: #121212 !important;
+    --bg-secondary: #1e1e1e !important;
+    --text-main: #f8f9fa !important;
+    --text-muted: #a0a0a0 !important;
+    --navbar-bg: #121212 !important;
+    --card-bg: #1e1e1e !important;
+    --ticker-bg: #ffffff !important;
+    --ticker-text: #000000 !important;
+    --hero-gradient: linear-gradient(180deg, #1e1e1e 0%, #121212 100%) !important;
+}
+
+/* --- Global Apply --- */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+}
+
+.hero-section {
+    background: var(--hero-gradient);
+}
