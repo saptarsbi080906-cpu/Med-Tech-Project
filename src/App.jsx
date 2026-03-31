@@ -18,11 +18,13 @@ import "./index.css";
 
 function App() {
   // --- AUTH & ROLE STATE ---
-  // Initialize from localStorage to persist login across refreshes
   const [isAuth, setIsAuth] = useState(() => localStorage.getItem("isAuth") === "true");
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("isAdmin") === "true");
   const [showLogin, setShowLogin] = useState(false);
   
+  // --- BACKEND MESSAGE STATE ---
+  const [backendMessage, setBackendMessage] = useState(""); 
+
   // --- DARK MODE STATE ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("theme") === "dark";
@@ -41,7 +43,20 @@ function App() {
     localStorage.setItem("isAdmin", isAdmin);
   }, [isAuth, isAdmin]);
 
-  // Handler for non-logged-in users trying to access features
+  // 3. Fetch Backend Data
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/data/')
+      .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
+      .then(data => {
+        setBackendMessage(data.message); 
+      })
+      .catch(error => console.error('Error fetching data:', error));
+  }, []);
+
+  // Handler for protected features
   const handleProtectedClick = (e) => {
     if (e) e.preventDefault();
     setShowLogin(true);
@@ -59,6 +74,13 @@ function App() {
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
       />
+
+      {/* Backend Status Bar */}
+      {backendMessage && (
+        <div className="alert alert-info text-center mb-0 py-1 small rounded-0 border-0 shadow-sm">
+          <strong>System:</strong> {backendMessage}
+        </div>
+      )}
 
       <Routes>
         {/* PUBLIC ROUTE */}
@@ -98,7 +120,7 @@ function App() {
           element={isAuth && isAdmin ? <RouteTracker /> : <Navigate to="/" replace />} 
         />
 
-        {/* FALLBACK (Redirects any unknown URL to Home) */}
+        {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

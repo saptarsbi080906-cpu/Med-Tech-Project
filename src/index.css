@@ -25,11 +25,11 @@
 }
 
 /* --- Global Apply --- */
-body {
+/* body {
     background-color: var(--bg-primary);
     color: var(--text-main);
-}
+} */
 
-.hero-section {
+/* .hero-section {
     background: var(--hero-gradient);
-}
+} */

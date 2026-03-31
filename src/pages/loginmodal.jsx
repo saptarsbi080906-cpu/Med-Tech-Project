@@ -2,126 +2,162 @@ import React, { useState } from "react";
 import { createPortal } from "react-dom";
 
 const LoginModal = ({ isOpen, onClose, setAuth, setAdmin }) => {
-  const [activeTab, setActiveTab] = useState("patient"); // 'patient' or 'admin'
+  const [activeTab, setActiveTab] = useState("patient"); 
   const [isRegistering, setIsRegistering] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    aadhar: "",
+  });
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
-  const handleToggleMode = () => setIsRegistering(!isRegistering);
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = (e) => {
+  const handleToggleMode = () => {
+    setIsRegistering(!isRegistering);
+    setError("");
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (activeTab === "admin") {
-      // Admin Login Logic
-      setAuth(true);
-      setAdmin(true);
-      localStorage.setItem("isAuth", "true");
-      localStorage.setItem("isAdmin", "true");
-    } else {
-      // Patient Login/Register Logic
-      setAuth(true);
-      setAdmin(false);
-      localStorage.setItem("isAuth", "true");
-      localStorage.setItem("isAdmin", "false");
+    setError("");
+
+    const url = isRegistering 
+      ? "http://127.0.0.1:8000/api/register/" 
+      : "http://127.0.0.1:8000/api/login/";
+
+    const bodyData = isRegistering 
+      ? {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          aadhar: formData.aadhar,
+          password: formData.password,
+        }
+      : {
+          username: formData.username,
+          password: formData.password,
+        };
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isRegistering) {
+          alert("Registration Successful! Please login.");
+          setIsRegistering(false);
+        } else {
+          // LOGIN SUCCESS
+          // Backend sends is_admin, fallback to tab selection if missing
+          const isAdminUser = data.is_admin ?? (activeTab === "admin");
+          
+          setAuth(true);
+          setAdmin(isAdminUser);
+          
+          localStorage.setItem("isAuth", "true");
+          localStorage.setItem("isAdmin", isAdminUser.toString());
+          localStorage.setItem("username", data.user || formData.username);
+          
+          onClose(); // This clears the "black screen" overlay
+        }
+      } else {
+        setError(data.error || data.message || "Action failed. Please check your credentials.");
+      }
+    } catch (err) {
+      setError("Server connection failed. Is your Django server running?");
     }
-    
-    onClose();
   };
 
   return createPortal(
-    <div className="login-overlay" onClick={onClose}>
-      <div className="login-box shadow-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="login-overlay" onClick={onClose} style={{
+      position: 'fixed',
+      top: 0, left: 0, width: '100vw', height: '100vh',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      display: 'flex', justifyContent: 'center', alignItems: 'center',
+      zIndex: 9999
+    }}>
+      <div className="login-box shadow-lg bg-white p-4 rounded-4" 
+           onClick={(e) => e.stopPropagation()} 
+           style={{ width: '100%', maxWidth: '400px', position: 'relative' }}>
+        
         <button onClick={onClose} className="btn-close position-absolute top-0 end-0 m-3"></button>
 
-        {/* Tab Switcher - Hidden during Registration */}
         {!isRegistering && (
-          <div className="d-flex mb-4 bg-body-secondary rounded-pill p-1">
+          <div className="d-flex mb-4 bg-light rounded-pill p-1">
             <button 
-              className={`btn w-50 rounded-pill py-2 transition-all ${activeTab === 'patient' ? 'btn-primary shadow-sm' : 'text-muted'}`}
+              className={`btn w-50 rounded-pill py-2 ${activeTab === 'patient' ? 'btn-primary shadow-sm' : 'text-muted'}`}
               onClick={() => setActiveTab('patient')}
             >
-              <i className="bi bi-person-heart me-2"></i>Patient
+              Patient
             </button>
             <button 
-              className={`btn w-50 rounded-pill py-2 transition-all ${activeTab === 'admin' ? 'btn-primary shadow-sm' : 'text-muted'}`}
+              className={`btn w-50 rounded-pill py-2 ${activeTab === 'admin' ? 'btn-primary shadow-sm' : 'text-muted'}`}
               onClick={() => setActiveTab('admin')}
             >
-              <i className="bi bi-shield-lock me-2"></i>Admin
+              Admin
             </button>
           </div>
         )}
 
-        <h3 className="fw-bold mb-1 theme-text text-center">
+        <h3 className="fw-bold mb-3 text-center">
           {isRegistering ? "Create Account" : activeTab === "patient" ? "Patient Login" : "Hospital Admin"}
         </h3>
-        <p className="text-muted small mb-4 text-center">
-          {isRegistering ? "Join Medi Queue today." : "Welcome back to the portal."}
-        </p>
+        
+        {error && <div className="alert alert-danger py-2 small text-center">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           {isRegistering ? (
-            /* --- REGISTRATION FIELDS --- */
             <>
-              <div className="mb-2">
-                <label className="form-label small fw-bold theme-text">Full Name</label>
-                <input type="text" className="form-control rounded-3 py-2 bg-body-secondary border-0" placeholder="John Doe" required />
-              </div>
-              <div className="mb-2">
-                <label className="form-label small fw-bold theme-text">Email ID</label>
-                <input type="email" className="form-control rounded-3 py-2 bg-body-secondary border-0" placeholder="example@mail.com" required />
-              </div>
+              <input type="text" name="fullName" onChange={handleInputChange} className="form-control mb-2" placeholder="Full Name" required />
+              <input type="email" name="email" onChange={handleInputChange} className="form-control mb-2" placeholder="Email ID" required />
               <div className="row g-2 mb-2">
-                <div className="col-6">
-                  <label className="form-label small fw-bold theme-text">Phone</label>
-                  <input type="tel" className="form-control rounded-3 py-2 bg-body-secondary border-0" placeholder="+91..." required />
-                </div>
-                <div className="col-6">
-                  <label className="form-label small fw-bold theme-text">Aadhar</label>
-                  <input type="text" className="form-control rounded-3 py-2 bg-body-secondary border-0" placeholder="12 Digit" required />
-                </div>
+                <div className="col-6"><input type="tel" name="phone" onChange={handleInputChange} className="form-control" placeholder="Phone" required /></div>
+                <div className="col-6"><input type="text" name="aadhar" onChange={handleInputChange} className="form-control" placeholder="Aadhar" required /></div>
               </div>
-              <div className="mb-4">
-                <label className="form-label small fw-bold theme-text">Password</label>
-                <input type="password" className="form-control rounded-3 py-2 bg-body-secondary border-0" placeholder="••••••••" required />
-              </div>
+              <input type="password" name="password" onChange={handleInputChange} className="form-control mb-4" placeholder="Password" required />
             </>
           ) : (
-            /* --- LOGIN FIELDS --- */
             <>
               <div className="mb-3">
-                <label className="form-label small fw-bold theme-text">
-                  {activeTab === "patient" ? "Aadhar Number / Email" : "Admin ID"}
-                </label>
-                <input type="text" className="form-control rounded-3 py-2 bg-body-secondary border-0" required />
+                <label className="form-label small fw-bold">{activeTab === "patient" ? "Aadhar / Email" : "Admin ID"}</label>
+                <input type="text" name="username" onChange={handleInputChange} className="form-control" required />
               </div>
               <div className="mb-4">
-                <label className="form-label small fw-bold theme-text">Password</label>
-                <input type="password" className="form-control rounded-3 py-2 bg-body-secondary border-0" required />
+                <label className="form-label small fw-bold">Password</label>
+                <input type="password" name="password" onChange={handleInputChange} className="form-control" required />
               </div>
             </>
           )}
-
-          <button type="submit" className="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm">
-            {isRegistering ? "Register Now" : activeTab === "patient" ? "Login to Portal" : "Access Dashboard"}
+          <button type="submit" className="btn btn-primary w-100 rounded-pill py-2 fw-bold">
+            {isRegistering ? "Register Now" : "Login"}
           </button>
         </form>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-3">
           <small className="text-muted">
-            {isRegistering ? "Already have an account? " : "Don't have an account? "}
-            <span 
-              className="text-primary fw-bold cursor-pointer" 
-              onClick={handleToggleMode}
-              style={{ textDecoration: 'underline' }}
-            >
-              {isRegistering ? "Sign In" : "Register Now"}
+            {isRegistering ? "Already have an account? " : "New user? "}
+            <span className="text-primary fw-bold cursor-pointer" onClick={handleToggleMode} style={{ cursor: 'pointer', textDecoration: 'underline' }}>
+              {isRegistering ? "Sign In" : "Register Here"}
             </span>
           </small>
         </div>
       </div>
     </div>,
-    document.body
+    document.body // Portals directly to body to avoid "modal-root" errors
   );
 };
 
